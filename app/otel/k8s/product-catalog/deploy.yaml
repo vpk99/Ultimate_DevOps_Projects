@@ -1,0 +1,37 @@
+apiVersion:  apps/v1
+kind: Deployment
+metadata:
+  namespace: project
+  name: product-catalog
+  labels: 
+    app: product-catalog
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: product-catalog
+  template:
+    metadata:
+      labels:
+        app: product-catalog
+    spec:
+      serviceAccount: product-catalog-sa
+      containers:
+        - name: product-catalog
+          image: vpk1999/ultimate_devops_project:product-catalog-v2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8088
+              protocol: TCP
+          
+          env: 
+            - name:  PRODUCT_CATALOG_PORT
+              value: "8088"
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
