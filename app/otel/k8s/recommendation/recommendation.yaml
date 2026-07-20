@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opentelemetry-demo-recommendationservice
+
+  labels:
+    app: recommendation
+
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+
+  selector:
+    matchLabels:
+      app: recommendation
+
+  template:
+    metadata:
+      labels:
+        app: recommendation
+
+    spec:
+      serviceAccountName: opentelemetry-demo
+
+      containers:
+      - name: recommendation
+
+        image: vpk1999/ultimate_devops_project:recommendation-service-v2
+
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 1010
+
+        env:
+        - name: RECOMMENDATION_PORT
+          value: "1010"
+
+        - name: PRODUCT_CATALOG_ADDR
+          value: "opentelemetry-demo-productcatalogservice:8080"
+
+        - name: OTEL_SERVICE_NAME
+          value: "recommendationservice"
+
+        - name: FLAGD_HOST
+          value: "opentelemetry-demo-flagd"
+
+        - name: FLAGD_PORT
+          value: "8013"
+
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://opentelemetry-demo-otelcol:4317"
+
+        - name: OTEL_PYTHON_LOG_CORRELATION
+          value: "true"
+
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.name=recommendationservice"
+
+        livenessProbe:
+          grpc:
+            port: 1010
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+        readinessProbe:
+          grpc:
+            port: 1010
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+        startupProbe:
+          grpc:
+            port: 1010
+          failureThreshold: 12
+          periodSeconds: 5
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opentelemetry-demo-recommendationservice
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app: recommendation
+
+  ports:
+  - port: 8080
+    targetPort: 1010

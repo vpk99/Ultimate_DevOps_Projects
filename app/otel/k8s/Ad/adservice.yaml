@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opentelemetry-demo-adservice
+  labels:
+    app: ad
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+
+  selector:
+    matchLabels:
+      app: ad
+
+  template:
+    metadata:
+      labels:
+        app: ad
+
+    spec:
+      serviceAccountName: opentelemetry-demo
+
+      containers:
+      - name: ad
+
+        image: vpk1999/ultimate_devops_project:adservice-v2
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 9099
+
+        env:
+        - name: AD_PORT
+          value: "9099"
+
+        - name: OTEL_SERVICE_NAME
+          value: "adservice"
+
+        - name: FLAGD_HOST
+          value: "opentelemetry-demo-flagd"
+
+        - name: FLAGD_PORT
+          value: "8013"
+
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://opentelemetry-demo-otelcol:4318"
+
+        - name: OTEL_LOGS_EXPORTER
+          value: "otlp"
+
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.name=adservice"
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 300Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opentelemetry-demo-adservice
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app: ad
+
+  ports:
+  - port: 8080
+    targetPort: 9099
